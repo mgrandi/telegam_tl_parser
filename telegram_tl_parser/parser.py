@@ -40,7 +40,7 @@ class Parser:
 
         pass
 
-    def parse(self, tl_file_path:pathlib.Path) -> typing.Sequence[TlClassDefinition]:
+    def parse(self, tl_file_path:pathlib.Path) -> typing.Sequence[TlFileDefinition]:
         '''
 
         @param tl_file_path the Path to the .tl file we are parsing
