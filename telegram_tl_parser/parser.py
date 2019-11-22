@@ -5,6 +5,8 @@ import logging
 import attr
 import pyparsing
 
+import telegram_tl_parser.utils as utils
+
 logger = logging.getLogger(__name__)
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -40,15 +42,18 @@ class Parser:
 
         pass
 
-    def parse(self, tl_file_path:pathlib.Path) -> typing.Sequence[TlFileDefinition]:
+    def parse(self, tl_file_path:pathlib.Path, skip_n_lines:int) -> typing.Sequence[TlFileDefinition]:
         '''
 
         @param tl_file_path the Path to the .tl file we are parsing
         '''
 
         logger.info("parsing file: `%s`", tl_file_path)
+        logger.info("skipping `%s` lines from the start of the file", skip_n_lines)
 
         # See `notes.md` for notes on the structure of the file
+
+        skip_line = pyparsing.SkipTo(pyparsing.lineEnd, include=True)
 
         comment = pyparsing.Literal('//') - pyparsing.restOfLine
 
@@ -68,7 +73,6 @@ class Parser:
         abc_name =  pyparsing.Word(pyparsing.alphas)
 
         semicolon_literal = pyparsing.Literal(";")
-
 
 
         def _get_complete_expression(name_for_expression_after_equal:str) -> pyparsing.ParserElement:
@@ -95,15 +99,22 @@ class Parser:
 
             return to_return
 
-        complete_expression_for_tl_types = _get_complete_expression("extends_from_abc")
+        # since the types come firs,t we need to see if we are skipping any lines or not
+        complete_expression_for_tl_types =  _get_complete_expression("extends_from_abc")
+        if skip_n_lines > 0:
+            complete_expression_for_tl_types = skip_line * skip_n_lines + complete_expression_for_tl_types
 
-        complete_expression_for_tl_types.setDebug(True)
+            logger.debug("skip_n_lines is `%s`, adding `%s` SkipTo (`%s`) ParserElements to the expression",
+                skip_n_lines, skip_n_lines, skip_line)
 
-        logger.debug("complete pattern: `%s`", complete_expression_for_tl_types)
+        utils.setLoggingDebugActionForParserElement(complete_expression_for_tl_types)
+        logger.debug("final pyparsing expression for types: `%s`", complete_expression_for_tl_types)
 
-        # basically the same thing as above, but with different names
         complete_expression_for_tl_functions = _get_complete_expression("return_type")
-        complete_expression_for_tl_functions.setDebug(True)
+        utils.setLoggingDebugActionForParserElement(complete_expression_for_tl_functions)
+
+        logger.debug("final pyparsing expression for functions: `%s`", complete_expression_for_tl_functions)
+
 
         res = None
         with open(tl_file_path, "r", encoding="utf-8") as f:

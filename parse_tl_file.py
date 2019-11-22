@@ -70,8 +70,21 @@ if __name__ == "__main__":
     root_logger.addHandler(logging_handler)
 
     # optional arguments, if specified these are the input and output files, if not specified, it uses stdin and stdout
-    parser.add_argument("--tl-file", dest="tl_file_path", type=isFileType, required=True, help="the telegram .tl file")
-    parser.add_argument("--output-file", dest="output_file_path", type=isValidNewFileLocation, required=True, help="the output file we will write")
+    parser.add_argument("tl_file_path",
+        metavar="tl-file",
+        type=isFileType,
+        help="the telegram .tl file")
+    parser.add_argument("output_file_path",
+        metavar="output-file",
+        type=isValidNewFileLocation,
+        help="the output file we will write")
+    parser.add_argument("--skip-n-lines",
+        dest="skip_n_lines",
+        type=int,
+        default=14,
+        required=False,
+        help="Skip N number of lines from the start of the file, defaults to 14.")
+
     parser.add_argument("--verbose", action="store_true", help="Increase logging verbosity")
 
 
@@ -87,7 +100,7 @@ if __name__ == "__main__":
 
         # run the application
         app = Parser()
-        result = app.parse(parsed_args.tl_file_path)
+        result = app.parse(parsed_args.tl_file_path, parsed_args.skip_n_lines)
 
         root_logger.info("Done!")
     except Exception as e:
