@@ -84,6 +84,10 @@ if __name__ == "__main__":
         default=14,
         required=False,
         help="Skip N number of lines from the start of the file, defaults to 14.")
+    parser.add_argument("--pyparsing-debug-logging",
+        dest="pyparsing_debug_logging_is_enabled",
+        action="store_true",
+        help="If provided, we will turn on extra logging from pyparsing, at the debug/error level")
 
     parser.add_argument("--verbose", action="store_true", help="Increase logging verbosity")
 
@@ -100,7 +104,10 @@ if __name__ == "__main__":
 
         # run the application
         app = Parser()
-        result = app.parse(parsed_args.tl_file_path, parsed_args.skip_n_lines)
+        result = app.parse(
+            parsed_args.tl_file_path,
+            parsed_args.skip_n_lines,
+            parsed_args.pyparsing_debug_logging_is_enabled)
 
         root_logger.info("Done!")
     except Exception as e:

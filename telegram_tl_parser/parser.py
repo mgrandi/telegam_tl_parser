@@ -42,7 +42,9 @@ class Parser:
 
         pass
 
-    def parse(self, tl_file_path:pathlib.Path, skip_n_lines:int) -> typing.Sequence[TlFileDefinition]:
+    def parse(self, tl_file_path:pathlib.Path,
+        skip_n_lines:int,
+        pyparsing_debug_logging_enabled:bool) -> typing.Sequence[TlFileDefinition]:
         '''
 
         @param tl_file_path the Path to the .tl file we are parsing
@@ -107,13 +109,15 @@ class Parser:
             logger.debug("skip_n_lines is `%s`, adding `%s` SkipTo (`%s`) ParserElements to the expression",
                 skip_n_lines, skip_n_lines, skip_line)
 
-        utils.setLoggingDebugActionForParserElement(complete_expression_for_tl_types)
         logger.debug("final pyparsing expression for types: `%s`", complete_expression_for_tl_types)
-
         complete_expression_for_tl_functions = _get_complete_expression("return_type")
-        utils.setLoggingDebugActionForParserElement(complete_expression_for_tl_functions)
 
         logger.debug("final pyparsing expression for functions: `%s`", complete_expression_for_tl_functions)
+
+        if pyparsing_debug_logging_enabled:
+            logger.debug("Turning on pyparsing debug logging")
+            utils.setLoggingDebugActionForParserElement(complete_expression_for_tl_types)
+            utils.setLoggingDebugActionForParserElement(complete_expression_for_tl_functions)
 
 
         res = None
@@ -127,8 +131,8 @@ class Parser:
             res_functions = complete_expression_for_tl_functions.parseString(tl_functions_str, parseAll=True)
 
 
-            logging.debug("result for types is: `%s`", res_types.dump())
-            logging.debug("result for functions is: `%s`", res_functions.dump())
+            # logging.debug("result for types is: `%s`", res_types.dump())
+            # logging.debug("result for functions is: `%s`", res_functions.dump())
 
         logging.info("done")
 

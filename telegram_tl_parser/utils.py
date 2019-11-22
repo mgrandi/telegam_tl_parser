@@ -7,13 +7,13 @@ pplogger = logger.getChild("pyparsing")
 
 def pyparsingLoggingStartDebugAction(instring, loc, expr):
 
-    pplogger.info("Match: `%s` at loc `%s`, row: `%d`, col: `%d`",
+    pplogger.debug("Match: `%s` at loc `%s`, row: `%d`, col: `%d`",
         expr, loc, pyparsing.lineno(loc, instring), pyparsing.col(loc, instring))
 
 
 def pyparsingLoggingSuccessDebugAction(instring, startloc, endloc, expr, toks):
 
-    pplogger.info("Matched `%s` -> `%s`", expr, toks.asList())
+    pplogger.debug("Matched `%s` -> `%s`", expr, toks.asList())
 
 
 def pyparsingLoggingExceptionDebugAction(instring, loc, expr, exc):
