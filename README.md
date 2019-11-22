@@ -10,6 +10,10 @@ with included scripts to convert the TL file to different formats:
 * JSON
 * a `.py` file with the TL types and functions written out as `attr` style classes
 
+## License
+
+MIT License
+
 ## Misc
 
 created by Mark Grandi on `2019-11-21`
