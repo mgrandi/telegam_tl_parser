@@ -54,7 +54,7 @@ class Parser:
         logger.info("skipping `%s` lines from the start of the file", skip_n_lines)
 
         # See `notes.md` for notes on the structure of the file
-
+        # and see `pyparsing_notes.md` for notes on pyparsing stuff
         skip_line = pyparsing.SkipTo(pyparsing.lineEnd, include=True)
 
         comment = pyparsing.Literal('//') - pyparsing.restOfLine
@@ -67,8 +67,8 @@ class Parser:
         # need the angle brackets for stuff like `vector<String>`
         param_type =  pyparsing.Word(pyparsing.alphanums + "<>")
 
-        ## dictOf(key,value) -> Dict(ZeroOrMore(Group(key + value)))
-        param_listing = pyparsing.Group(param_name("param_name") +
+        param_listing = pyparsing.Group(
+            param_name("param_name") +
             colon_literal_suppressed +
             param_type("param_type"))
 
@@ -76,9 +76,11 @@ class Parser:
 
         semicolon_literal = pyparsing.Literal(";")
 
+        zero_or_more_params = pyparsing.ZeroOrMore(param_listing("params*"))
+        final_expression_key = class_name("class_name")
 
         def _get_complete_expression(name_for_expression_after_equal:str) -> pyparsing.ParserElement:
-            ''' helper that returns the same pyparsing expression but with a differnet 'name'
+            ''' helper that returns the same pyparsing expression but with a different 'name'
             for the part after the equal sign
 
             for types, the part after the `=` is the abstract class that the type extends
@@ -86,15 +88,14 @@ class Parser:
             for functions, the part after the `=` is the result type
             '''
 
+            final_expression_value = zero_or_more_params + \
+                equal_sign_literal + \
+                abc_name(name_for_expression_after_equal) + \
+                semicolon_literal + \
+                pyparsing.restOfLine
             # if i use pyparsing.ZeroOrMore instead of dictOf here, then it
             # basically smashes everything together into 1 entry
-            to_return = pyparsing.dictOf(
-                class_name("class_name*"), # key
-                pyparsing.ZeroOrMore(param_listing)("params*") + # value
-                    equal_sign_literal +
-                    abc_name(name_for_expression_after_equal) +
-                    semicolon_literal +
-                    pyparsing.restOfLine)
+            to_return = pyparsing.dictOf(final_expression_key, final_expression_value)
 
             # ignore comments
             to_return.ignore(comment)
@@ -131,8 +132,8 @@ class Parser:
             res_functions = complete_expression_for_tl_functions.parseString(tl_functions_str, parseAll=True)
 
 
-            # logging.debug("result for types is: `%s`", res_types.dump())
-            # logging.debug("result for functions is: `%s`", res_functions.dump())
+            logging.debug("result for types is: `%s`", res_types.dump())
+            logging.debug("result for functions is: `%s`", res_functions.dump())
 
         logging.info("done")
 
