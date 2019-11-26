@@ -12,22 +12,22 @@ logger = logging.getLogger(__name__)
 @attr.s(auto_attribs=True, frozen=True)
 class TlParameter:
 
-    field_name:str = attr.ib()
-    field_type:str = attr.ib()
+    param_name:str = attr.ib()
+    param_type:str = attr.ib()
 
 
 @attr.s(auto_attribs=True, frozen=True)
 class TlTypeDefinition:
 
     class_name:str = attr.ib()
-    fields:typing.Sequence[TlParameter] = attr.ib()
+    params:typing.Sequence[TlParameter] = attr.ib()
     inherits_from:str = attr.ib()
 
 @attr.s(auto_attribs=True, frozen=True)
 class TlFunctionDefinition:
 
     class_name:str = attr.ib()
-    fields:typing.Sequence[TlParameter] = attr.ib()
+    params:typing.Sequence[TlParameter] = attr.ib()
     return_type:str = attr.ib()
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -41,6 +41,7 @@ class Parser:
     def __init__(self):
 
         pass
+
 
     def parse(self, tl_file_path:pathlib.Path,
         skip_n_lines:int,
@@ -121,7 +122,8 @@ class Parser:
             utils.setLoggingDebugActionForParserElement(complete_expression_for_tl_functions)
 
 
-        res = None
+        res_types = None
+        res_functions = None
         with open(tl_file_path, "r", encoding="utf-8") as f:
 
             full_file = f.read()
@@ -131,11 +133,62 @@ class Parser:
             res_types = complete_expression_for_tl_types.parseString(tl_type_str, parseAll=True)
             res_functions = complete_expression_for_tl_functions.parseString(tl_functions_str, parseAll=True)
 
+        result_type_list = []
+        result_fn_list = []
 
-            logging.debug("result for types is: `%s`", res_types.dump())
-            logging.debug("result for functions is: `%s`", res_functions.dump())
+        # now convert the parse result to our own object
 
-        logging.info("done")
+        # types:
+        for iter_result in res_types.values():
+            cls_name = iter_result["class_name"]
+            extends_from = iter_result["extends_from_abc"]
+            param_list = []
+
+            if "params" in iter_result.keys():
+                for iter_param in iter_result["params"]:
+
+                    p_name = iter_param["param_name"]
+                    p_type = iter_param["param_type"]
+
+                    tlp = TlParameter(param_name=p_name, param_type=p_type)
+                    logger.debug("--param: `%s`", tlp)
+                    param_list.append(tlp)
+
+
+            new_type = TlTypeDefinition(class_name=cls_name, params=param_list ,inherits_from=extends_from)
+            logging.debug("new type: `%s`", new_type)
+            result_type_list.append(new_type)
+
+        # functions:
+        for iter_result in res_functions.values():
+            cls_name = iter_result["class_name"]
+            rtn_type = iter_result["return_type"]
+            param_list = []
+
+            if "params" in iter_result.keys():
+                for iter_param in iter_result["params"]:
+
+                    p_name = iter_param["param_name"]
+                    p_type = iter_param["param_type"]
+
+                    tlp = TlParameter(param_name=p_name, param_type=p_type)
+                    logger.debug("--param: `%s`", tlp)
+                    param_list.append(tlp)
+
+
+            new_fn = TlFunctionDefinition(class_name=cls_name, params=param_list ,return_type=rtn_type)
+            logging.debug("new function: `%s`", new_type)
+            result_fn_list.append(new_fn)
+
+
+
+        result_file_def = TlFileDefinition(types=result_type_list, functions=result_fn_list)
+
+        logging.debug("parsed file definition: `%s`", result_file_def)
+        return result_file_def
+
+
+
 
 
 
