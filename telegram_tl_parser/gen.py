@@ -25,7 +25,7 @@ class Generator:
 
         root_obj["tl_file_definition"] = d
 
-        json_str = json.dumps(d)
+        json_str = json.dumps(root_obj, indent=4)
 
         return json_str
 
