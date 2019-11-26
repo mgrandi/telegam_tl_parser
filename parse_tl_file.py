@@ -10,8 +10,7 @@ import pathlib
 import attr
 
 from telegram_tl_parser.parser import Parser
-
-
+from telegram_tl_parser.gen import Generator
 
 def isFileType(filePath):
     ''' see if the file path given to us by argparse is a file
@@ -44,7 +43,7 @@ def isValidNewFileLocation(filePath):
 
     # try and resolve the path
     try:
-        path_resolved = path_maybe.resolve(strict=False)
+        path_resolved = path_maybe.resolve(strict=False).expanduser()
 
     except Exception as e:
         raise argparse.ArgumentTypeError("Failed to parse `{}` as a path: `{}`".format(filePath, e))
@@ -88,8 +87,21 @@ if __name__ == "__main__":
         dest="pyparsing_debug_logging_is_enabled",
         action="store_true",
         help="If provided, we will turn on extra logging from pyparsing, at the debug/error level")
+    parser.add_argument("--verbose",
+        action="store_true",
+        help="Increase logging verbosity")
 
-    parser.add_argument("--verbose", action="store_true", help="Increase logging verbosity")
+    output_group = parser.add_mutually_exclusive_group(required=True)
+
+    output_group.add_argument("--json-output",
+        dest="json_output",
+        action="store_true",
+        help="Output as JSON")
+    output_group.add_argument("--attrs-classes-output",
+        dest="attrs_classes_output",
+        action="store_true",
+        help="Output as Attrs style classes")
+
 
 
     try:
@@ -104,12 +116,32 @@ if __name__ == "__main__":
 
         # run the application
         app = Parser()
-        result = app.parse(
+        gen = Generator()
+        result_file_def = app.parse(
             parsed_args.tl_file_path,
             parsed_args.skip_n_lines,
             parsed_args.pyparsing_debug_logging_is_enabled)
 
+
+        output = None
+
+        # output the information in the requested format
+        if parsed_args.json_output:
+            output = gen.tl_file_definition_to_json(result_file_def)
+
+        elif parsed_args.attrs_classes_output:
+            # parsed_args.as_attrs_classes == True
+            output = gen.tl_file_definition_to_attrs_classes(result_file_def)
+
+        else:
+            raise Exception("Unknown output format?")
+
+        with open(parsed_args.output_file_path, "w", encoding="utf-8") as f:
+            f.write(output)
+
+
         root_logger.info("Done!")
+
     except Exception as e:
         root_logger.exception("Something went wrong!")
         sys.exit(1)

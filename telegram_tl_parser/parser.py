@@ -6,34 +6,9 @@ import attr
 import pyparsing
 
 import telegram_tl_parser.utils as utils
+from telegram_tl_parser.model import TlParameter, TlTypeDefinition, TlFunctionDefinition, TlFileDefinition
 
 logger = logging.getLogger(__name__)
-
-@attr.s(auto_attribs=True, frozen=True)
-class TlParameter:
-
-    param_name:str = attr.ib()
-    param_type:str = attr.ib()
-
-
-@attr.s(auto_attribs=True, frozen=True)
-class TlTypeDefinition:
-
-    class_name:str = attr.ib()
-    params:typing.Sequence[TlParameter] = attr.ib()
-    inherits_from:str = attr.ib()
-
-@attr.s(auto_attribs=True, frozen=True)
-class TlFunctionDefinition:
-
-    class_name:str = attr.ib()
-    params:typing.Sequence[TlParameter] = attr.ib()
-    return_type:str = attr.ib()
-
-@attr.s(auto_attribs=True, frozen=True)
-class TlFileDefinition:
-    types:typing.Sequence[TlTypeDefinition] = attr.ib()
-    functions:typing.Sequence[TlFunctionDefinition] = attr.ib()
 
 
 class Parser:
