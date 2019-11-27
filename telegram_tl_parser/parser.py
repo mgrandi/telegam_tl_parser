@@ -26,8 +26,6 @@ class Parser:
         pass
 
 
-
-
     def parse(self, tl_file_path:pathlib.Path,
         skip_n_lines:int,
         pyparsing_debug_logging_enabled:bool) -> typing.Sequence[TlFileDefinition]:
@@ -68,9 +66,10 @@ class Parser:
 
         def _setLineAndLineNoAction(s:str, loc:int, toks:pyparsing.ParseResults) -> pyparsing.ParseResults:
             '''
-            helper that gets called whenever a match for each line of the Telegram TL file gets hit, we
-            add some entries to the 'parse results', which include the line number and original line text
+            helper that is meant to be used with `<ParserElement>.setParseAction`, which means this function gets called
+            whenever a match for each line of the Telegram TL file gets hit.
 
+            Here we add stuff to the ParseResults that it passes in
 
             @param s is the original parse string
             @param loc is the location in the string where matching started
