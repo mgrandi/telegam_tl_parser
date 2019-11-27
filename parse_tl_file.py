@@ -11,6 +11,7 @@ import attr
 
 from telegram_tl_parser.parser import Parser
 from telegram_tl_parser.gen import Generator
+from telegram_tl_parser.output import JsonOutput, AttrsOutput
 
 def isFileType(filePath):
     ''' see if the file path given to us by argparse is a file
@@ -91,18 +92,17 @@ if __name__ == "__main__":
         action="store_true",
         help="Increase logging verbosity")
 
-    output_group = parser.add_mutually_exclusive_group(required=True)
+    subparsers = parser.add_subparsers(help="sub-command help" )
 
-    output_group.add_argument("--json-output",
-        dest="json_output",
-        action="store_true",
-        help="Output as JSON")
-    output_group.add_argument("--attrs-classes-output",
-        dest="attrs_classes_output",
-        action="store_true",
-        help="Output as Attrs style classes")
+    json_subparser = subparsers.add_parser("json", help="JSON output")
+    json_subparser.add_argument("--class-prefix", dest="json_class_prefix",
+        help="A string that will be the prefix for every class in the resulting JSON")
+    json_subparser.set_defaults(func_to_run=JsonOutput.run_from_args)
 
-
+    attrs_subparser = subparsers.add_parser("attrs", help="Attrs style classes output")
+    attrs_subparser.add_argument("--class-prefix", dest="attrs_class_prefix",
+        help="A string that will be the prefix for every class generated")
+    attrs_subparser.set_defaults(func_to_run=AttrsOutput.run_from_args)
 
     try:
         parsed_args = parser.parse_args()
@@ -114,31 +114,17 @@ if __name__ == "__main__":
             root_logger.setLevel("INFO")
 
 
-        # run the application
-        app = Parser()
-        gen = Generator()
-        result_file_def = app.parse(
-            parsed_args.tl_file_path,
-            parsed_args.skip_n_lines,
-            parsed_args.pyparsing_debug_logging_is_enabled)
+        root_logger.debug("parsed arguments: `%s`", parsed_args)
 
+        # run the function associated with each sub command
+        if "func_to_run" in parsed_args:
 
-        output = None
-
-        # output the information in the requested format
-        if parsed_args.json_output:
-            output = gen.tl_file_definition_to_json(result_file_def)
-
-        elif parsed_args.attrs_classes_output:
-            # parsed_args.as_attrs_classes == True
-            output = gen.tl_file_definition_to_attrs_classes(result_file_def)
+            parsed_args.func_to_run(parsed_args)
 
         else:
-            raise Exception("Unknown output format?")
-
-        with open(parsed_args.output_file_path, "w", encoding="utf-8") as f:
-            f.write(output)
-
+            root_logger.info("no subcommand specified!")
+            parser.print_help()
+            sys.exit(0)
 
         root_logger.info("Done!")
 
