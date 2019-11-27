@@ -28,6 +28,8 @@ class JsonOutput:
         with open(parsed_args.output_file_path, "w", encoding="utf-8") as f:
             f.write(output)
 
+        logger.info("file successfully written as JSON to `%s`", parsed_args.output_file_path)
+
 
 class AttrsOutput:
 

@@ -15,6 +15,7 @@ class TlTypeDefinition:
     class_name:str = attr.ib()
     params:typing.Sequence[TlParameter] = attr.ib()
     inherits_from:str = attr.ib()
+    source_line:str = attr.ib()
 
 @attr.s(auto_attribs=True, frozen=True)
 class TlFunctionDefinition:
@@ -22,6 +23,7 @@ class TlFunctionDefinition:
     class_name:str = attr.ib()
     params:typing.Sequence[TlParameter] = attr.ib()
     return_type:str = attr.ib()
+    source_line:str = attr.ib()
 
 @attr.s(auto_attribs=True, frozen=True)
 class TlFileDefinition:
