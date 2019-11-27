@@ -1,8 +1,10 @@
 import logging
 import argparse
+import typing
 
 from telegram_tl_parser.parser import Parser
 from telegram_tl_parser.gen import Generator
+from telegram_tl_parser.model import TlClassTypeEnum
 
 
 logger = logging.getLogger(__name__)
@@ -45,7 +47,6 @@ class AttrsOutput:
             parsed_args.tl_file_path,
             parsed_args.skip_n_lines,
             parsed_args.pyparsing_debug_logging_is_enabled)
-
 
         output = gen.tl_file_definition_to_attrs_classes(result_file_def)
 

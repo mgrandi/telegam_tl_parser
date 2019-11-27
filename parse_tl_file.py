@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # set up logging stuff
     logging.captureWarnings(True) # capture warnings with the logging infrastructure
     root_logger = logging.getLogger()
-    logging_formatter = logging.Formatter("%(asctime)s %(threadName)-10s %(name)-20s %(levelname)-8s: %(message)s")
+    logging_formatter = logging.Formatter("%(asctime)s %(threadName)-10s %(name)-30s %(levelname)-8s: %(message)s")
     logging_handler = logging.StreamHandler(sys.stdout)
     logging_handler.setFormatter(logging_formatter)
     root_logger.addHandler(logging_handler)
@@ -95,13 +95,9 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers(help="sub-command help" )
 
     json_subparser = subparsers.add_parser("json", help="JSON output")
-    json_subparser.add_argument("--class-prefix", dest="json_class_prefix",
-        help="A string that will be the prefix for every class in the resulting JSON")
     json_subparser.set_defaults(func_to_run=JsonOutput.run_from_args)
 
     attrs_subparser = subparsers.add_parser("attrs", help="Attrs style classes output")
-    attrs_subparser.add_argument("--class-prefix", dest="attrs_class_prefix",
-        help="A string that will be the prefix for every class generated")
     attrs_subparser.set_defaults(func_to_run=AttrsOutput.run_from_args)
 
     try:

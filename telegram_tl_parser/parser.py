@@ -6,7 +6,7 @@ import attr
 import pyparsing
 
 import telegram_tl_parser.utils as utils
-from telegram_tl_parser.model import TlParameter, TlTypeDefinition, TlFunctionDefinition, TlFileDefinition
+from telegram_tl_parser.model import TlParameter, TlTypeDefinition, TlFunctionDefinition, TlFileDefinition, TlClassTypeEnum
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,8 @@ RESULT_NAME_CLASS_NAME = "class_name"
 RESULT_NAME_EXTENDS_FROM_ABC = "extends_from_abc"
 RESULT_NAME_RETURN_TYPE = "return_type"
 
+ROOT_TYPE_NAME = "RootObject"
+
 
 class Parser:
 
@@ -26,7 +28,8 @@ class Parser:
         pass
 
 
-    def parse(self, tl_file_path:pathlib.Path,
+    def parse(self,
+        tl_file_path:pathlib.Path,
         skip_n_lines:int,
         pyparsing_debug_logging_enabled:bool) -> typing.Sequence[TlFileDefinition]:
         '''
@@ -144,7 +147,7 @@ class Parser:
             res_types = complete_expression_for_tl_types.parseString(tl_type_str, parseAll=True)
             res_functions = complete_expression_for_tl_functions.parseString(tl_functions_str, parseAll=True)
 
-        result_type_list = []
+        result_concrete_type_list = []
         result_fn_list = []
 
         # now convert the parse result to our own object
@@ -171,10 +174,11 @@ class Parser:
             new_type = TlTypeDefinition(
                 class_name=cls_name,
                 params=param_list,
-                inherits_from=extends_from,
-                source_line=src_line)
+                extends_from=extends_from,
+                source_line=src_line,
+                class_type=TlClassTypeEnum.CONCRETE)
             logging.debug("new type: `%s`", new_type)
-            result_type_list.append(new_type)
+            result_concrete_type_list.append(new_type)
 
         # functions:
         for iter_result in res_functions.values():
@@ -203,11 +207,52 @@ class Parser:
             logging.debug("new function: `%s`", new_type)
             result_fn_list.append(new_fn)
 
-        # create the final file definition
-        result_file_def = TlFileDefinition(types=result_type_list, functions=result_fn_list)
+        # so here we have the 'explicit' results, but we need to create entries for the 'implicit' class types
+        # for example, `authenticationCodeTypeTelegramMessage length:int32 = AuthenticationCodeType;` means that
+        # the class `authenticationCodeTypeTelegramMessage` extends `AuthenticationCodeType`, but that class
+        # is never explicitly defined in the TL file, so we need to make it
 
-        logging.debug("final parsed file definition: `%s` types and `%s` functions",
-            len(result_file_def.types), len(result_file_def.functions))
+        # dict of the class name as a string -> TlTypeDefinition
+        result_abstract_types_dict = dict()
+
+        logger.debug("creating abstract type definitions")
+
+        # first create the "root" object that all of the abstract classes will extend from
+        root_type_name = "TlRootObject"
+        root_type = TlTypeDefinition(
+                class_name=root_type_name,
+                params=[],
+                extends_from=None,
+                source_line=-1,
+                class_type=TlClassTypeEnum.ABSTRACT)
+        result_abstract_types_dict[root_type_name] = root_type
+
+        # then go through and create more depending on the Concrete TlTypeDefinitions we created from the file
+        for iter_type_def in result_concrete_type_list:
+            iter_abstract_class_name = iter_type_def.extends_from
+
+            if iter_abstract_class_name not in result_abstract_types_dict.keys():
+
+                new_abstract_type = TlTypeDefinition(
+                    class_name=iter_abstract_class_name,
+                    params=[],
+                    extends_from=root_type_name,
+                    source_line=-1,
+                    class_type=TlClassTypeEnum.ABSTRACT)
+
+                logger.debug("new abstract type definition: `%s`", new_abstract_type)
+                result_abstract_types_dict[iter_abstract_class_name] = new_abstract_type
+
+            else:
+
+                logger.debug("abstract type was already created: `%s`", iter_abstract_class_name)
+
+        # create the final file definition
+        final_types_list = result_concrete_type_list + list(result_abstract_types_dict.values())
+        result_file_def = TlFileDefinition(types=final_types_list, functions=result_fn_list)
+
+        logging.info("final parsed file definition: `%s` concrete types, `%s` abstract types and `%s` functions",
+            len(result_concrete_type_list), len(result_abstract_types_dict.values()), len(result_file_def.functions))
 
         return result_file_def
 

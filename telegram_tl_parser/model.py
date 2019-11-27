@@ -1,6 +1,11 @@
 import typing
 
 import attr
+import enum
+
+class TlClassTypeEnum(enum.Enum):
+    CONCRETE = "concrete"
+    ABSTRACT = "abstract"
 
 @attr.s(auto_attribs=True, frozen=True)
 class TlParameter:
@@ -14,8 +19,9 @@ class TlTypeDefinition:
 
     class_name:str = attr.ib()
     params:typing.Sequence[TlParameter] = attr.ib()
-    inherits_from:str = attr.ib()
+    extends_from:typing.Optional[str] = attr.ib()
     source_line:str = attr.ib()
+    class_type:TlClassTypeEnum = attr.ib()
 
 @attr.s(auto_attribs=True, frozen=True)
 class TlFunctionDefinition:
