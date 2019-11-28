@@ -26,12 +26,13 @@ class TlTypeDefinition:
 @attr.s(auto_attribs=True, frozen=True)
 class TlFunctionDefinition:
 
-    class_name:str = attr.ib()
+    function_name:str = attr.ib()
     params:typing.Sequence[TlParameter] = attr.ib()
     return_type:str = attr.ib()
     source_line:str = attr.ib()
 
 @attr.s(auto_attribs=True, frozen=True)
 class TlFileDefinition:
+
     types:typing.Sequence[TlTypeDefinition] = attr.ib()
     functions:typing.Sequence[TlFunctionDefinition] = attr.ib()

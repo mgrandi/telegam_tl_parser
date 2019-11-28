@@ -14,7 +14,7 @@ RESULT_NAME_SOURCE_LINE = "source_line"
 RESULT_NAME_PARAMS = "params"
 RESULT_NAME_PARAM_NAME = "param_name"
 RESULT_NAME_PARAM_TYPE = "param_type"
-RESULT_NAME_CLASS_NAME = "class_name"
+RESULT_NAME_CLASS_OR_FUNCTION_NAME = "class_or_function_name"
 RESULT_NAME_EXTENDS_FROM_ABC = "extends_from_abc"
 RESULT_NAME_RETURN_TYPE = "return_type"
 
@@ -64,7 +64,7 @@ class Parser:
         semicolon_literal = pyparsing.Literal(";")
 
         zero_or_more_params = pyparsing.ZeroOrMore(param_listing(F"{RESULT_NAME_PARAMS}*"))
-        final_expression_key = class_name(RESULT_NAME_CLASS_NAME)
+        final_expression_key = class_name(RESULT_NAME_CLASS_OR_FUNCTION_NAME)
 
 
         def _setLineAndLineNoAction(s:str, loc:int, toks:pyparsing.ParseResults) -> pyparsing.ParseResults:
@@ -154,7 +154,7 @@ class Parser:
 
         # types:
         for iter_result in res_types.values():
-            cls_name = iter_result[RESULT_NAME_CLASS_NAME]
+            cls_name = iter_result[RESULT_NAME_CLASS_OR_FUNCTION_NAME]
             extends_from = iter_result[RESULT_NAME_EXTENDS_FROM_ABC]
             src_line = iter_result[RESULT_NAME_SOURCE_LINE]
 
@@ -182,7 +182,7 @@ class Parser:
 
         # functions:
         for iter_result in res_functions.values():
-            cls_name = iter_result[RESULT_NAME_CLASS_NAME]
+            fn_name = iter_result[RESULT_NAME_CLASS_OR_FUNCTION_NAME]
             rtn_type = iter_result[RESULT_NAME_RETURN_TYPE]
 
             src_line = iter_result[RESULT_NAME_SOURCE_LINE]
@@ -200,7 +200,7 @@ class Parser:
 
 
             new_fn = TlFunctionDefinition(
-                class_name=cls_name,
+                function_name=fn_name,
                 params=param_list,
                 return_type=rtn_type,
                 source_line=src_line)
