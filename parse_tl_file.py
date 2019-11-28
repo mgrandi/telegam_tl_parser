@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # set up logging stuff
     logging.captureWarnings(True) # capture warnings with the logging infrastructure
     root_logger = logging.getLogger()
-    logging_formatter = logging.Formatter("%(asctime)s %(threadName)-10s %(name)-30s %(levelname)-8s: %(message)s")
+    logging_formatter = logging.Formatter("%(asctime)s %(threadName)-10s %(name)-35s %(levelname)-8s: %(message)s")
     logging_handler = logging.StreamHandler(sys.stdout)
     logging_handler.setFormatter(logging_formatter)
     root_logger.addHandler(logging_handler)

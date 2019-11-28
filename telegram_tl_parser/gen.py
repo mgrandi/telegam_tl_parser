@@ -3,6 +3,7 @@ import typing
 import decimal
 import io
 import logging
+import re
 
 import attr
 
@@ -27,6 +28,9 @@ class Generator:
         "int64": "int",
         "bytes": "bytes",
         "Bool": "bool"}
+
+    BASIC_TYPE_VECTOR_REGEX_TYPE_NAME = "type"
+    BASIC_TYPE_VECTOR_REGEX = re.compile(f"^vector<(?P<{BASIC_TYPE_VECTOR_REGEX_TYPE_NAME}>.*)>$")
 
     def _json_default(self, obj:typing.Any) -> typing.Any:
         '''
@@ -101,6 +105,56 @@ class Generator:
         return " " * num_spaces
 
 
+    def _replace_basic_type_with_python_type(self, t:str) -> str:
+        '''
+        helper to look up in the Generator.BASIC_TYPES_REPLACEMENT_DICT dictionary
+        '''
+        if t in Generator.BASIC_TYPES_REPLACEMENT_DICT.keys():
+            replacement = Generator.BASIC_TYPES_REPLACEMENT_DICT[t]
+            logger.debug("------ replacing `%s` with `%s`", t, replacement)
+            return replacement
+        else:
+            logger.debug("------ not replacing `%s` with anything, returning as is", t)
+            return t
+
+    def _pythonify_tl_type(self, tl_type:str) -> str:
+        '''
+        helper to take a object type that appears in a TL file and pythonify it
+
+        aka `string` -> `str`
+        `vector<string>` -> `typing.Sequence[str]`
+
+        etc
+
+        @param tl_type the TL type as a string that we read from the file
+        @return the python-ified type to put in the class or function definition
+        '''
+
+        logger.debug("---- pythonifying the type `%s`", tl_type)
+        result = None
+
+        # first see if this is a vector type, as that requires special handling
+        # if it is not a vector, just try and replace the type normally
+        if (regex_result := Generator.BASIC_TYPE_VECTOR_REGEX.search(tl_type)) is not None:
+
+            # it is a vector type
+
+            logger.debug("------ vector regex matched: `%s`", regex_result)
+
+            # replace the inner type, and then return it as a typing.Sequence[<replaced type>]
+            vector_inner_type = regex_result.groupdict()[Generator.BASIC_TYPE_VECTOR_REGEX_TYPE_NAME]
+            inner_type_replacement = self._replace_basic_type_with_python_type(vector_inner_type)
+
+            result = f"typing.Sequence[{inner_type_replacement}]"
+        else:
+            # it is not a vector type
+            logger.debug("------ vector regex didn't match")
+            result = self._replace_basic_type_with_python_type(tl_type)
+
+        logger.debug("------ pythonify result: `%s` becomes `%s`", tl_type, result)
+        return result
+
+
     def tl_file_definition_to_attrs_classes(self, filedef:TlFileDefinition) -> str:
         '''
         takes a TlFileDefinition and converts it to Attrs style classes
@@ -115,8 +169,12 @@ class Generator:
         # where we will write the result while constructing it
         out = io.StringIO()
 
+        out.write("import typing\n")
+        out.write("\n")
         out.write("import attrs\n")
         out.write("\n")
+        out.write("\n")
+
 
         l.debug("starting TlFileDefinition -> attrs classes generation")
 
@@ -142,12 +200,7 @@ class Generator:
                 for iter_param_def in iter_type_def.params:
                     l.debug("-- param: `%s`", iter_param_def)
 
-                    param_type = iter_param_def.param_type
-
-                    # if its a type that has a replacement, replace it
-                    if param_type in Generator.BASIC_TYPES_REPLACEMENT_DICT.keys():
-                        l.debug("---- replacing `%s` with `%s`", param_type, Generator.BASIC_TYPES_REPLACEMENT_DICT[param_type])
-                        param_type = Generator.BASIC_TYPES_REPLACEMENT_DICT[param_type]
+                    param_type = self._pythonify_tl_type(iter_param_def.param_type)
 
                     out.write(f"{self._spaces(Generator.INDENTATION)}{iter_param_def.param_name}:{param_type} = attr.ib()\n")
             else:
@@ -165,12 +218,12 @@ class Generator:
 
             for iter_param_def in iter_function_def.params:
                 l.debug("-- param: `%s`", iter_param_def)
-                iter_p_str = f"{iter_param_def.param_name}:{iter_param_def.param_type}"
+                iter_p_str = f"{iter_param_def.param_name}:{self._pythonify_tl_type(iter_param_def.param_type)}"
                 params_str_list.append(iter_p_str)
                 l.debug("---- adding param string: `%s`", iter_p_str)
 
             params_string = ", ".join(params_str_list)
-            out.write(f"def {iter_function_def.function_name}({params_string}) -> {iter_function_def.return_type}:\n")
+            out.write(f"def {iter_function_def.function_name}({params_string}) -> {self._pythonify_tl_type(iter_function_def.return_type)}:\n")
             out.write(f"{self._spaces(Generator.INDENTATION)}pass")
 
             out.write("\n")
