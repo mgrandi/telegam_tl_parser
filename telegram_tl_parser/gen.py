@@ -18,6 +18,10 @@ class Generator:
 
     INDENTATION = 4
 
+    TDLIB_TYPE_VAR_NAME = "__tdlib_type__"
+    TDLIB_FUNC_VAR_NAME = "__tdlib_func__"
+
+
     # these are the types that are usually lines 1-14 in the Telegram TL file, and can be replaced straight up
     # note: this does not include vector, which is handled specially below
     BASIC_TYPES_REPLACEMENT_DICT = {
@@ -170,8 +174,9 @@ class Generator:
         out = io.StringIO()
 
         out.write("import typing\n")
+        out.write("import decimal\n")
         out.write("\n")
-        out.write("import attrs\n")
+        out.write("import attr\n")
         out.write("\n")
         out.write("\n")
 
@@ -195,6 +200,9 @@ class Generator:
             else:
                 out.write(f"class {iter_type_def.class_name}:\n")
 
+            # write out the special 'type' name
+            out.write(f"{self._spaces(Generator.INDENTATION)}{Generator.TDLIB_TYPE_VAR_NAME} = \"{iter_type_def.class_name}\"\n")
+
             # write out the parameters, or pass if there are none
             if len(iter_type_def.params) > 0:
                 for iter_param_def in iter_type_def.params:
@@ -205,7 +213,6 @@ class Generator:
                     out.write(f"{self._spaces(Generator.INDENTATION)}{iter_param_def.param_name}:{param_type} = attr.ib()\n")
             else:
                 l.debug(" -- no parameters")
-                out.write(f"{self._spaces(Generator.INDENTATION)}pass\n")
 
             out.write("\n")
             out.write("\n")
@@ -214,8 +221,11 @@ class Generator:
         for iter_function_def in filedef.functions:
             l.debug("current function def: `%s`", iter_function_def)
 
+
+
             params_str_list = []
 
+            # parameters
             for iter_param_def in iter_function_def.params:
                 l.debug("-- param: `%s`", iter_param_def)
                 iter_p_str = f"{iter_param_def.param_name}:{self._pythonify_tl_type(iter_param_def.param_type)}"
@@ -223,8 +233,11 @@ class Generator:
                 l.debug("---- adding param string: `%s`", iter_p_str)
 
             params_string = ", ".join(params_str_list)
+            # function definition line
             out.write(f"def {iter_function_def.function_name}({params_string}) -> {self._pythonify_tl_type(iter_function_def.return_type)}:\n")
-            out.write(f"{self._spaces(Generator.INDENTATION)}pass")
+
+            # write out the special 'function call' name
+            out.write(f"{self._spaces(Generator.INDENTATION)}{Generator.TDLIB_FUNC_VAR_NAME} = \"{iter_function_def.function_name}\"\n")
 
             out.write("\n")
             out.write("\n")
