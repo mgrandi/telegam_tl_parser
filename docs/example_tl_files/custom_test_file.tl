@@ -10,8 +10,8 @@ testTypeTwo paramTwo:Bool = TestTypeTwo;
 // test int32
 testTypeThree paramThree:int32 = TestTypeThree;
 
-// test int54
-testTypeFour paramFour:int54 = TestTypeFour;
+// test int53
+testTypeFour paramFour:int53 = TestTypeFour;
 
 // test int64
 testTypeFive paramFive:int64 = TestTypeFive;
@@ -33,7 +33,7 @@ testTypeTen paramTen:int64 = TestTypeNine;
 testTypeEleven paramEleven:bool = TestTypeNine;
 
 // test multiple
-testTypeTwelve paramTwelveOne:int32 paramTwelveTwo:int54 paramTwelveThree:string paramTwelveFour:testTypeFour paramTwelveFive:TestTypeEight paramTwelveSix:vector<TestTypeEight> = TestTypeTwelve;
+testTypeTwelve paramTwelveOne:int32 paramTwelveTwo:int53 paramTwelveThree:string paramTwelveFour:testTypeFour paramTwelveFive:TestTypeEight paramTwelveSix:vector<TestTypeEight> = TestTypeTwelve;
 
 
 ---functions---
