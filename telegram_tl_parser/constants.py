@@ -1,0 +1,1 @@
+ROOT_OBJECT_NAME = "TdlibRootObject"
