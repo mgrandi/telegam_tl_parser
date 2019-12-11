@@ -208,15 +208,13 @@ class Parser:
         logger.debug("creating abstract type definitions")
 
         # first create the "root" object that all of the abstract classes will extend from
-        # TODO: hardcoded root object name
-        root_type_name = "TdlibRootObject"
         root_type = TlTypeDefinition(
-                class_name=root_type_name,
+                class_name=constants.ROOT_OBJECT_NAME,
                 params=[TlParameter(param_name="_extra", param_type="str", required=False, default_value="")],
                 extends_from=None,
                 source_line=-1,
                 class_type=TlClassTypeEnum.ABSTRACT)
-        result_abstract_types_dict[root_type_name] = root_type
+        result_abstract_types_dict[root_type.class_name] = root_type
 
         # then go through and create more depending on the Concrete TlTypeDefinitions we created from the file
         for iter_type_def in result_concrete_type_list:
@@ -227,7 +225,7 @@ class Parser:
                 new_abstract_type = TlTypeDefinition(
                     class_name=iter_abstract_class_name,
                     params=[],
-                    extends_from=root_type_name,
+                    extends_from=root_type.class_name,
                     source_line=-1,
                     class_type=TlClassTypeEnum.ABSTRACT)
 
