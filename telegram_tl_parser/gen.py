@@ -161,7 +161,7 @@ class Generator:
         # TODO: have this as a list instead of hardcoding it
         out.write("import typing\n")
         out.write("import decimal\n")
-        out.write("import json")
+        out.write("import json\n")
         out.write("\n")
         out.write("import attr\n")
         out.write("\n")
@@ -226,7 +226,8 @@ class Generator:
                 out.write(f'''{self._spaces(Generator.INDENTATION)}def as_tdlib_json(self) -> str:\n''')
                 out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result = attr.asdict(self, filter=attr.filters.exclude(attr.fields({iter_type_def.class_name})._extra))\n''')
                 out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result["{constants.AS_TDLIB_JSON_TYPE_KEY_NAME}"] = self.{constants.TDLIB_TYPE_VAR_NAME}\n''')
-                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result["{constants.AS_TDLIB_JSON_EXTRA_KEY_NAME}"] = self._extra\n''')
+                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}if self._extra:\n''')
+                out.write(f'''{self._spaces(Generator.INDENTATION * 3)}asdict_result["{constants.AS_TDLIB_JSON_EXTRA_KEY_NAME}"] = self._extra\n''')
                 out.write(f'''{self._spaces(Generator.INDENTATION * 2)}return json.dumps(asdict_result)\n''')
 
 
