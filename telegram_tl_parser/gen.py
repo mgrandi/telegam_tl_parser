@@ -18,25 +18,8 @@ class Generator:
 
     INDENTATION = 4
 
-    TDLIB_TYPE_VAR_NAME = "__tdlib_type__"
-
-    AS_TDLIB_JSON_TYPE_KEY_NAME = "@type"
-    AS_TDLIB_JSON_EXTRA_KEY_NAME = "@extra"
 
 
-    # these are the types that are usually lines 1-14 in the Telegram TL file, and can be replaced straight up
-    # note: this does not include vector, which is handled specially below
-    BASIC_TYPES_REPLACEMENT_DICT = {
-        "double": "decimal.Decimal" ,
-        "string": "str",
-        "int32": "int",
-        "int53": "int",
-        "int64": "int",
-        "bytes": "bytes",
-        "Bool": "bool"}
-
-    BASIC_TYPE_VECTOR_REGEX_TYPE_NAME = "type"
-    BASIC_TYPE_VECTOR_REGEX = re.compile(f"^vector<(?P<{BASIC_TYPE_VECTOR_REGEX_TYPE_NAME}>.*)>$")
 
     def _json_default(self, obj:typing.Any) -> typing.Any:
         '''
@@ -115,8 +98,8 @@ class Generator:
         '''
         helper to look up in the Generator.BASIC_TYPES_REPLACEMENT_DICT dictionary
         '''
-        if t in Generator.BASIC_TYPES_REPLACEMENT_DICT.keys():
-            replacement = Generator.BASIC_TYPES_REPLACEMENT_DICT[t]
+        if t in constants.BASIC_TYPES_REPLACEMENT_DICT.keys():
+            replacement = constants.BASIC_TYPES_REPLACEMENT_DICT[t]
             logger.debug("------ replacing `%s` with `%s`", t, replacement)
             return replacement
         else:
@@ -141,14 +124,14 @@ class Generator:
 
         # first see if this is a vector type, as that requires special handling
         # if it is not a vector, just try and replace the type normally
-        if (regex_result := Generator.BASIC_TYPE_VECTOR_REGEX.search(tl_type)) is not None:
+        if (regex_result := constants.BASIC_TYPE_VECTOR_REGEX.search(tl_type)) is not None:
 
             # it is a vector type
 
             logger.debug("------ vector regex matched: `%s`", regex_result)
 
             # replace the inner type, and then return it as a typing.Sequence[<replaced type>]
-            vector_inner_type = regex_result.groupdict()[Generator.BASIC_TYPE_VECTOR_REGEX_TYPE_NAME]
+            vector_inner_type = regex_result.groupdict()[constants.BASIC_TYPE_VECTOR_REGEX_TYPE_NAME]
             inner_type_replacement = self._replace_basic_type_with_python_type(vector_inner_type)
 
             result = f"typing.Sequence[{inner_type_replacement}]"
@@ -212,7 +195,7 @@ class Generator:
                 out.write(f"class {iter_type_def.class_name}:\n")
 
             # write out the special 'type' name
-            out.write(f"{self._spaces(Generator.INDENTATION)}{Generator.TDLIB_TYPE_VAR_NAME} = \"{iter_type_def.class_name}\"\n")
+            out.write(f"{self._spaces(Generator.INDENTATION)}{constants.TDLIB_TYPE_VAR_NAME} = \"{iter_type_def.class_name}\"\n")
 
             # write out the parameters, or pass if there are none
             if len(iter_type_def.params) > 0:
@@ -242,8 +225,8 @@ class Generator:
                 # create the special function for serializing the object as JSON
                 out.write(f'''{self._spaces(Generator.INDENTATION)}def as_tdlib_json(self) -> str:\n''')
                 out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result = attr.asdict(self, filter=attr.filters.exclude(attr.fields({iter_type_def.class_name})._extra))\n''')
-                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result["{Generator.AS_TDLIB_JSON_TYPE_KEY_NAME}"] = self.{Generator.TDLIB_TYPE_VAR_NAME}\n''')
-                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result["{Generator.AS_TDLIB_JSON_EXTRA_KEY_NAME}"] = self._extra\n''')
+                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result["{constants.AS_TDLIB_JSON_TYPE_KEY_NAME}"] = self.{constants.TDLIB_TYPE_VAR_NAME}\n''')
+                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result["{constants.AS_TDLIB_JSON_EXTRA_KEY_NAME}"] = self._extra\n''')
                 out.write(f'''{self._spaces(Generator.INDENTATION * 2)}return json.dumps(asdict_result)\n''')
 
 
@@ -263,7 +246,7 @@ class Generator:
             out.write(f"class tdlib_func_{iter_function_def.function_name}({constants.ROOT_OBJECT_NAME}):\n")
 
             # write out the special 'type' name
-            out.write(f"{self._spaces(Generator.INDENTATION)}{Generator.TDLIB_TYPE_VAR_NAME} = \"{iter_function_def.function_name}\"\n")
+            out.write(f"{self._spaces(Generator.INDENTATION)}{constants.TDLIB_TYPE_VAR_NAME} = \"{iter_function_def.function_name}\"\n")
 
             # write out the parameters, or pass if there are none
             if len(iter_function_def.params) > 0:
@@ -278,23 +261,6 @@ class Generator:
 
             out.write("\n")
             out.write("\n")
-            # params_str_list = []
 
-            # # parameters
-            # for iter_param_def in iter_function_def.params:
-            #     l.debug("-- param: `%s`", iter_param_def)
-            #     iter_p_str = f"{iter_param_def.param_name}:{self._pythonify_tl_type(iter_param_def.param_type)}"
-            #     params_str_list.append(iter_p_str)
-            #     l.debug("---- adding param string: `%s`", iter_p_str)
-
-            # params_string = ", ".join(params_str_list)
-            # # function definition line
-            # out.write(f"def {iter_function_def.function_name}({params_string}) -> {self._pythonify_tl_type(iter_function_def.return_type)}:\n")
-
-            # # write out the special 'function call' name
-            # out.write(f"{self._spaces(Generator.INDENTATION)}{Generator.TDLIB_FUNC_VAR_NAME} = \"{iter_function_def.function_name}\"\n")
-
-            # out.write("\n")
-            # out.write("\n")
 
         return out.getvalue()

@@ -6,21 +6,10 @@ import attr
 import pyparsing
 
 import telegram_tl_parser.utils as utils
+import telegram_tl_parser.constants as constants
 from telegram_tl_parser.model import TlParameter, TlTypeDefinition, TlFunctionDefinition, TlFileDefinition, TlClassTypeEnum
 
 logger = logging.getLogger(__name__)
-
-RESULT_NAME_SOURCE_LINE = "source_line"
-RESULT_NAME_PARAMS = "params"
-RESULT_NAME_PARAM_NAME = "param_name"
-RESULT_NAME_PARAM_TYPE = "param_type"
-RESULT_NAME_CLASS_OR_FUNCTION_NAME = "class_or_function_name"
-RESULT_NAME_EXTENDS_FROM_ABC = "extends_from_abc"
-RESULT_NAME_RETURN_TYPE = "return_type"
-
-ROOT_TYPE_NAME = "RootObject"
-
-
 
 class Parser:
 
@@ -56,16 +45,16 @@ class Parser:
         param_type =  pyparsing.Word(pyparsing.alphanums + "<>")
 
         param_listing = pyparsing.Group(
-            param_name(RESULT_NAME_PARAM_NAME) +
+            param_name(constants.RESULT_NAME_PARAM_NAME) +
             colon_literal_suppressed +
-            param_type(RESULT_NAME_PARAM_TYPE))
+            param_type(constants.RESULT_NAME_PARAM_TYPE))
 
         abc_name =  pyparsing.Word(pyparsing.alphas)
 
         semicolon_literal = pyparsing.Literal(";")
 
-        zero_or_more_params = pyparsing.ZeroOrMore(param_listing(F"{RESULT_NAME_PARAMS}*"))
-        final_expression_key = class_name(RESULT_NAME_CLASS_OR_FUNCTION_NAME)
+        zero_or_more_params = pyparsing.ZeroOrMore(param_listing(f"{constants.RESULT_NAME_PARAMS}*"))
+        final_expression_key = class_name(constants.RESULT_NAME_CLASS_OR_FUNCTION_NAME)
 
 
         def _setLineAndLineNoAction(s:str, loc:int, toks:pyparsing.ParseResults) -> pyparsing.ParseResults:
@@ -87,7 +76,7 @@ class Parser:
 
             logger.debug("loc: `%s`, lineno: `%s`, line: `%s`", loc, orig_line_number, orig_line)
 
-            t[RESULT_NAME_SOURCE_LINE] = orig_line
+            t[constants.RESULT_NAME_SOURCE_LINE] = orig_line
 
             return t
 
@@ -119,7 +108,7 @@ class Parser:
             return to_return
 
         # since the types come firs,t we need to see if we are skipping any lines or not
-        complete_expression_for_tl_types =  _get_complete_expression(RESULT_NAME_EXTENDS_FROM_ABC)
+        complete_expression_for_tl_types =  _get_complete_expression(constants.RESULT_NAME_EXTENDS_FROM_ABC)
         if skip_n_lines > 0:
             complete_expression_for_tl_types = skip_line * skip_n_lines + complete_expression_for_tl_types
 
@@ -127,7 +116,7 @@ class Parser:
                 skip_n_lines, skip_n_lines, skip_line)
 
         logger.debug("final pyparsing expression for types: `%s`", complete_expression_for_tl_types)
-        complete_expression_for_tl_functions = _get_complete_expression(RESULT_NAME_RETURN_TYPE)
+        complete_expression_for_tl_functions = _get_complete_expression(constants.RESULT_NAME_RETURN_TYPE)
 
         logger.debug("final pyparsing expression for functions: `%s`", complete_expression_for_tl_functions)
 
@@ -155,18 +144,18 @@ class Parser:
 
         # types:
         for iter_result in res_types.values():
-            cls_name = iter_result[RESULT_NAME_CLASS_OR_FUNCTION_NAME]
-            extends_from = iter_result[RESULT_NAME_EXTENDS_FROM_ABC]
-            src_line = iter_result[RESULT_NAME_SOURCE_LINE]
+            cls_name = iter_result[constants.RESULT_NAME_CLASS_OR_FUNCTION_NAME]
+            extends_from = iter_result[constants.RESULT_NAME_EXTENDS_FROM_ABC]
+            src_line = iter_result[constants.RESULT_NAME_SOURCE_LINE]
 
             param_list = []
 
 
-            if RESULT_NAME_PARAMS in iter_result.keys():
-                for iter_param in iter_result[RESULT_NAME_PARAMS]:
+            if constants.RESULT_NAME_PARAMS in iter_result.keys():
+                for iter_param in iter_result[constants.RESULT_NAME_PARAMS]:
 
-                    p_name = iter_param[RESULT_NAME_PARAM_NAME]
-                    p_type = iter_param[RESULT_NAME_PARAM_TYPE]
+                    p_name = iter_param[constants.RESULT_NAME_PARAM_NAME]
+                    p_type = iter_param[constants.RESULT_NAME_PARAM_TYPE]
 
                     tlp = TlParameter(param_name=p_name, param_type=p_type)
                     logger.debug("--param: `%s`", tlp)
@@ -183,17 +172,17 @@ class Parser:
 
         # functions:
         for iter_result in res_functions.values():
-            fn_name = iter_result[RESULT_NAME_CLASS_OR_FUNCTION_NAME]
-            rtn_type = iter_result[RESULT_NAME_RETURN_TYPE]
+            fn_name = iter_result[constants.RESULT_NAME_CLASS_OR_FUNCTION_NAME]
+            rtn_type = iter_result[constants.RESULT_NAME_RETURN_TYPE]
 
-            src_line = iter_result[RESULT_NAME_SOURCE_LINE]
+            src_line = iter_result[constants.RESULT_NAME_SOURCE_LINE]
             param_list = []
 
-            if RESULT_NAME_PARAMS in iter_result.keys():
-                for iter_param in iter_result[RESULT_NAME_PARAMS]:
+            if constants.RESULT_NAME_PARAMS in iter_result.keys():
+                for iter_param in iter_result[constants.RESULT_NAME_PARAMS]:
 
-                    p_name = iter_param[RESULT_NAME_PARAM_NAME]
-                    p_type = iter_param[RESULT_NAME_PARAM_TYPE]
+                    p_name = iter_param[constants.RESULT_NAME_PARAM_NAME]
+                    p_type = iter_param[constants.RESULT_NAME_PARAM_TYPE]
 
                     tlp = TlParameter(param_name=p_name, param_type=p_type)
                     logger.debug("--param: `%s`", tlp)
