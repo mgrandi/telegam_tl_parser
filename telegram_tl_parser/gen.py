@@ -8,7 +8,7 @@ import re
 import attr
 
 from telegram_tl_parser.model import TlParameter, TlTypeDefinition, TlFunctionDefinition, TlFileDefinition, TlClassTypeEnum
-
+import telegram_tl_parser.constants as constants
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,9 @@ class Generator:
     INDENTATION = 4
 
     TDLIB_TYPE_VAR_NAME = "__tdlib_type__"
-    TDLIB_FUNC_VAR_NAME = "__tdlib_func__"
+
+    AS_TDLIB_JSON_TYPE_KEY_NAME = "@type"
+    AS_TDLIB_JSON_EXTRA_KEY_NAME = "@extra"
 
 
     # these are the types that are usually lines 1-14 in the Telegram TL file, and can be replaced straight up
@@ -86,7 +88,7 @@ class Generator:
             raise Exception(f"this sorting function only operates on TlTypeDefinition objects! got `{type(obj)}`")
 
         # option 1, it is the root object, it should go first before anything else
-        if obj.class_name == "TlRootObject":
+        if obj.class_name == constants.ROOT_OBJECT_NAME:
             return (0, obj.class_name)
 
         # option 2: where it is one of the abstract classes (other than the root object) , those should go
@@ -173,8 +175,10 @@ class Generator:
         # where we will write the result while constructing it
         out = io.StringIO()
 
+        # TODO: have this as a list instead of hardcoding it
         out.write("import typing\n")
         out.write("import decimal\n")
+        out.write("import json")
         out.write("\n")
         out.write("import attr\n")
         out.write("\n")
@@ -188,10 +192,17 @@ class Generator:
         # need to sort the types so we don't have the classes defined in a invalid order
         sorted_type_defs_list = sorted(filedef.types, key=self._tl_type_definition_sorter)
 
+        # NOTE: you need `kw_only` or else you get errors because the root class has a parameter
+        # with a default value while subclasses have parameters without a default value
+        # see http://www.attrs.org/en/stable/examples.html#keyword-only-attributes
+        attr_s_annotation_string = "@attr.s(auto_attribs=True, frozen=True, kw_only=True)\n"
+
         # types
         for iter_type_def in sorted_type_defs_list:
             l.debug("current type def: `%s`", iter_type_def)
-            out.write("@attr.s(auto_attribs=True, frozen=True)\n")
+
+
+            out.write(attr_s_annotation_string)
 
             # see if this class extends anything , everything should extend something except for the
             # "root object" we have
@@ -210,9 +221,31 @@ class Generator:
 
                     param_type = self._pythonify_tl_type(iter_param_def.param_type)
 
-                    out.write(f"{self._spaces(Generator.INDENTATION)}{iter_param_def.param_name}:{param_type} = attr.ib()\n")
+                    # handle if the parameter is marked as required or not
+                    if iter_param_def.required:
+                        out.write(f"{self._spaces(Generator.INDENTATION)}{iter_param_def.param_name}:{param_type} = attr.ib()\n")
+                    else:
+                        # special case string, where we need to surround the value in quotes
+                        if isinstance(iter_param_def.default_value, str):
+                            out.write(f"{self._spaces(Generator.INDENTATION)}{iter_param_def.param_name}:{param_type} = attr.ib(default=\"{iter_param_def.default_value}\")\n")
+                        else:
+                            out.write(f"{self._spaces(Generator.INDENTATION)}{iter_param_def.param_name}:{param_type} = attr.ib(default={iter_param_def.default_value})\n")
+
+
+
             else:
                 l.debug(" -- no parameters")
+
+            # TODO: hardcoded root object name
+            if iter_type_def.class_name == constants.ROOT_OBJECT_NAME:
+
+                # create the special function for serializing the object as JSON
+                out.write(f'''{self._spaces(Generator.INDENTATION)}def as_tdlib_json(self) -> str:\n''')
+                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result = attr.asdict(self, filter=attr.filters.exclude(attr.fields({iter_type_def.class_name})._extra))\n''')
+                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result["{Generator.AS_TDLIB_JSON_TYPE_KEY_NAME}"] = self.{Generator.TDLIB_TYPE_VAR_NAME}\n''')
+                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result["{Generator.AS_TDLIB_JSON_EXTRA_KEY_NAME}"] = self._extra\n''')
+                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}return json.dumps(asdict_result)\n''')
+
 
             out.write("\n")
             out.write("\n")
@@ -222,24 +255,46 @@ class Generator:
             l.debug("current function def: `%s`", iter_function_def)
 
 
+            out.write(attr_s_annotation_string)
 
-            params_str_list = []
+            # all functions extend from 'root object'
+            # TODO: hardcoded root object name, should be set in CLI script and done during parisng
+            # TODO: hardcoded function name prefix, should be set in CLI script and done during parsing
+            out.write(f"class tdlib_func_{iter_function_def.function_name}({constants.ROOT_OBJECT_NAME}):\n")
 
-            # parameters
-            for iter_param_def in iter_function_def.params:
-                l.debug("-- param: `%s`", iter_param_def)
-                iter_p_str = f"{iter_param_def.param_name}:{self._pythonify_tl_type(iter_param_def.param_type)}"
-                params_str_list.append(iter_p_str)
-                l.debug("---- adding param string: `%s`", iter_p_str)
+            # write out the special 'type' name
+            out.write(f"{self._spaces(Generator.INDENTATION)}{Generator.TDLIB_TYPE_VAR_NAME} = \"{iter_function_def.function_name}\"\n")
 
-            params_string = ", ".join(params_str_list)
-            # function definition line
-            out.write(f"def {iter_function_def.function_name}({params_string}) -> {self._pythonify_tl_type(iter_function_def.return_type)}:\n")
+            # write out the parameters, or pass if there are none
+            if len(iter_function_def.params) > 0:
+                for iter_param_def in iter_function_def.params:
+                    l.debug("-- param: `%s`", iter_param_def)
 
-            # write out the special 'function call' name
-            out.write(f"{self._spaces(Generator.INDENTATION)}{Generator.TDLIB_FUNC_VAR_NAME} = \"{iter_function_def.function_name}\"\n")
+                    param_type = self._pythonify_tl_type(iter_param_def.param_type)
+
+                    out.write(f"{self._spaces(Generator.INDENTATION)}{iter_param_def.param_name}:{param_type} = attr.ib()\n")
+            else:
+                l.debug(" -- no parameters")
 
             out.write("\n")
             out.write("\n")
+            # params_str_list = []
+
+            # # parameters
+            # for iter_param_def in iter_function_def.params:
+            #     l.debug("-- param: `%s`", iter_param_def)
+            #     iter_p_str = f"{iter_param_def.param_name}:{self._pythonify_tl_type(iter_param_def.param_type)}"
+            #     params_str_list.append(iter_p_str)
+            #     l.debug("---- adding param string: `%s`", iter_p_str)
+
+            # params_string = ", ".join(params_str_list)
+            # # function definition line
+            # out.write(f"def {iter_function_def.function_name}({params_string}) -> {self._pythonify_tl_type(iter_function_def.return_type)}:\n")
+
+            # # write out the special 'function call' name
+            # out.write(f"{self._spaces(Generator.INDENTATION)}{Generator.TDLIB_FUNC_VAR_NAME} = \"{iter_function_def.function_name}\"\n")
+
+            # out.write("\n")
+            # out.write("\n")
 
         return out.getvalue()

@@ -13,6 +13,10 @@ class TlParameter:
     param_name:str = attr.ib()
     param_type:str = attr.ib()
 
+    # as of right now, only TlRootObject makes use of these
+    required:bool = attr.ib(default=True)
+    default_value:typing.Any = attr.ib(default=None)
+
 
 @attr.s(auto_attribs=True, frozen=True)
 class TlTypeDefinition:

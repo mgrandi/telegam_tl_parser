@@ -21,6 +21,7 @@ RESULT_NAME_RETURN_TYPE = "return_type"
 ROOT_TYPE_NAME = "RootObject"
 
 
+
 class Parser:
 
     def __init__(self):
@@ -218,10 +219,11 @@ class Parser:
         logger.debug("creating abstract type definitions")
 
         # first create the "root" object that all of the abstract classes will extend from
-        root_type_name = "TlRootObject"
+        # TODO: hardcoded root object name
+        root_type_name = "TdlibRootObject"
         root_type = TlTypeDefinition(
                 class_name=root_type_name,
-                params=[],
+                params=[TlParameter(param_name="_extra", param_type="str", required=False, default_value="")],
                 extends_from=None,
                 source_line=-1,
                 class_type=TlClassTypeEnum.ABSTRACT)
