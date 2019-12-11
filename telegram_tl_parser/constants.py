@@ -2,9 +2,6 @@ import re
 
 ROOT_OBJECT_NAME = "RootObject"
 
-ATTRS_OUTPUT_TYPE_PREFIX = "tdlib_type_"
-ATTRS_OUTPUT_FUNC_PREFIX = "tdlib_func_"
-
 TDLIB_TYPE_VAR_NAME = "__tdlib_type__"
 
 AS_TDLIB_JSON_TYPE_KEY_NAME = "@type"

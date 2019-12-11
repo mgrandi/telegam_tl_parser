@@ -208,9 +208,9 @@ class Generator:
             # see if this class extends anything , everything should extend something except for the
             # "root object" we have
             if iter_type_def.extends_from:
-                out.write(f"class {constants.ATTRS_OUTPUT_TYPE_PREFIX}{iter_type_def.class_name}({iter_type_def.extends_from}):\n")
+                out.write(f"class {iter_type_def.class_name}({iter_type_def.extends_from}):\n")
             else:
-                out.write(f"class {constants.ATTRS_OUTPUT_TYPE_PREFIX}{iter_type_def.class_name}:\n")
+                out.write(f"class {iter_type_def.class_name}:\n")
 
             # write out the special 'type' name
             out.write(f"{self._spaces(Generator.INDENTATION)}{constants.TDLIB_TYPE_VAR_NAME} = \"{iter_type_def.class_name}\"\n")
@@ -259,7 +259,7 @@ class Generator:
             out.write(attr_s_annotation_string)
 
             # all functions extend from 'root object'
-            out.write(f"class {constants.ATTRS_OUTPUT_FUNC_PREFIX}{iter_function_def.function_name}({constants.ROOT_OBJECT_NAME}):\n")
+            out.write(f"class {iter_function_def.function_name}({constants.ROOT_OBJECT_NAME}):\n")
 
             # write out the special 'type' name
             out.write(f"{self._spaces(Generator.INDENTATION)}{constants.TDLIB_TYPE_VAR_NAME} = \"{iter_function_def.function_name}\"\n")
