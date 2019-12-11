@@ -177,6 +177,11 @@ class Generator:
         out = io.StringIO()
 
         # TODO: have this as a list instead of hardcoding it
+
+        # you need this __future__ import or else you get errors if you have an annotation
+        # for a class that doesn't yet exist
+        # see https://www.python.org/dev/peps/pep-0563/ : "PEP 563 -- Postponed Evaluation of Annotations"
+        out.write("from __future__ import annotations\n")
         out.write("import typing\n")
         out.write("import decimal\n")
         out.write("import json\n")
