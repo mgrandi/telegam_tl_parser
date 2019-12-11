@@ -124,15 +124,35 @@ class Generator:
         # if it is not a vector, just try and replace the type normally
         if (regex_result := constants.BASIC_TYPE_VECTOR_REGEX.search(tl_type)) is not None:
 
-            # it is a vector type
-
             logger.debug("------ vector regex matched: `%s`", regex_result)
 
-            # replace the inner type, and then return it as a typing.Sequence[<replaced type>]
-            vector_inner_type = regex_result.groupdict()[constants.BASIC_TYPE_VECTOR_REGEX_TYPE_NAME]
+            # it is a vector type, we need to loop becuase we could have arbitrarily nested vectors
+            # since it already matched, we start out with 1 'sequence' wrapping the inner type, but
+            # we might have double (or even triple? why) nested vectors
+            running_prefix = "typing.Sequence["
+            middle = regex_result.groupdict()[constants.BASIC_TYPE_VECTOR_REGEX_TYPE_NAME]
+            running_suffix = "]"
+
+
+            while True:
+                logger.debug("-------- vector unwrapping, prefix: `%s`, middle: `%s`, suffix: `%s`",
+                    running_prefix, middle, running_suffix)
+
+                tmp_regex_result = constants.BASIC_TYPE_VECTOR_REGEX.search(middle)
+                if tmp_regex_result:
+                    logger.debug("---------- matched again")
+                    running_prefix += "typing.Sequence["
+                    running_suffix += "]"
+                    middle = tmp_regex_result.groupdict()[constants.BASIC_TYPE_VECTOR_REGEX_TYPE_NAME]
+                else:
+                    logger.debug("---------- didn't match again")
+                    break
+
+            # replace the inner type, and then return it as prefix + middle (type) + suffix
+            vector_inner_type = middle
             inner_type_replacement = self._replace_basic_type_with_python_type(vector_inner_type)
 
-            result = f"typing.Sequence[{inner_type_replacement}]"
+            result = f"{running_prefix}{inner_type_replacement}{running_suffix}"
         else:
             # it is not a vector type
             logger.debug("------ vector regex didn't match")

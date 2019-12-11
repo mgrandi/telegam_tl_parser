@@ -25,6 +25,10 @@ testTypeSeven paramSeven:bytes = TestTypeSeven;
 // test vector
 testTypeEight paramEight:vector<string> = TestTypeEight;
 
+// test nested vector
+testTypeEightOne paramEight:vector<vector<string>> = TestTypeEightOne;
+testTypeEightTwo paramEight:vector<vector<vector<string>>> = TestTypeEightTwo;
+
 // test inheritance
 testTypeNine paramNine:int32 = TestTypeNine;
 

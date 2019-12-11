@@ -107,7 +107,7 @@ class Parser:
 
             return to_return
 
-        # since the types come firs,t we need to see if we are skipping any lines or not
+        # since the types come first, we need to see if we are skipping any lines or not
         complete_expression_for_tl_types =  _get_complete_expression(constants.RESULT_NAME_EXTENDS_FROM_ABC)
         if skip_n_lines > 0:
             complete_expression_for_tl_types = skip_line * skip_n_lines + complete_expression_for_tl_types
