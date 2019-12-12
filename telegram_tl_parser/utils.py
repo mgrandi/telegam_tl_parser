@@ -5,6 +5,16 @@ import pyparsing
 logger = logging.getLogger(__name__)
 pplogger = logger.getChild("pyparsing")
 
+def strip_margin(str_to_strip, margin_char="|"):
+
+    res = ""
+    for iter_line in str_to_strip.split("\n"):
+        if margin_char in iter_line:
+            res += f"{iter_line[iter_line.find(margin_char) + 1:]}\n"
+        else:
+            res += f"{iter_line}\n"
+    return res
+
 def pyparsingLoggingStartDebugAction(instring, loc, expr):
 
     pplogger.debug("Match: `%s` at loc `%s`, row: `%d`, col: `%d`",

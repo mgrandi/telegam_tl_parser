@@ -176,20 +176,7 @@ class Generator:
         # where we will write the result while constructing it
         out = io.StringIO()
 
-        # TODO: have this as a list instead of hardcoding it
-
-        # you need this __future__ import or else you get errors if you have an annotation
-        # for a class that doesn't yet exist
-        # see https://www.python.org/dev/peps/pep-0563/ : "PEP 563 -- Postponed Evaluation of Annotations"
-        out.write("from __future__ import annotations\n")
-        out.write("import typing\n")
-        out.write("import decimal\n")
-        out.write("import json\n")
-        out.write("\n")
-        out.write("import attr\n")
-        out.write("\n")
-        out.write("\n")
-
+        out.write(constants.ATTRS_GEN_IMPORT_STATEMENTS)
 
         l.debug("starting TlFileDefinition -> attrs classes generation")
 
@@ -237,20 +224,13 @@ class Generator:
                         else:
                             out.write(f"{self._spaces(Generator.INDENTATION)}{iter_param_def.param_name}:{param_type} = attr.ib(default={iter_param_def.default_value})\n")
 
-
-
             else:
                 l.debug(" -- no parameters")
 
             if iter_type_def.class_name == constants.ROOT_OBJECT_NAME:
 
                 # create the special function for serializing the object as JSON
-                out.write(f'''{self._spaces(Generator.INDENTATION)}def as_tdlib_json(self) -> str:\n''')
-                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result = attr.asdict(self, filter=attr.filters.exclude(attr.fields({iter_type_def.class_name})._extra))\n''')
-                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}asdict_result["{constants.AS_TDLIB_JSON_TYPE_KEY_NAME}"] = self.{constants.TDLIB_TYPE_VAR_NAME}\n''')
-                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}if self._extra:\n''')
-                out.write(f'''{self._spaces(Generator.INDENTATION * 3)}asdict_result["{constants.AS_TDLIB_JSON_EXTRA_KEY_NAME}"] = self._extra\n''')
-                out.write(f'''{self._spaces(Generator.INDENTATION * 2)}return json.dumps(asdict_result)\n''')
+                out.write(constants.ATTRS_GEN_AS_TDLIB_JSON)
 
 
             out.write("\n")
