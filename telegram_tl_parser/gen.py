@@ -227,12 +227,6 @@ class Generator:
             else:
                 l.debug(" -- no parameters")
 
-            if iter_type_def.class_name == constants.ROOT_OBJECT_NAME:
-
-                # create the special function for serializing the object as JSON
-                out.write(constants.ATTRS_GEN_AS_TDLIB_JSON)
-
-
             out.write("\n")
             out.write("\n")
 
@@ -264,4 +258,11 @@ class Generator:
             out.write("\n")
 
 
+        # then finally write the two variables that are the 'global' and 'local' namespaces
+        # for stuff to use when they need help `eval()`ing a string representation of one of
+        # these classes
+
+        out.write(constants.ATTRS_GEN_LOCALS_AND_GLOBALS_VARS)
+
+        # done
         return out.getvalue()

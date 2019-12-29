@@ -6,7 +6,6 @@ ROOT_OBJECT_NAME = "RootObject"
 TDLIB_TYPE_VAR_NAME = "__tdlib_type__"
 
 AS_TDLIB_JSON_TYPE_KEY_NAME = "@type"
-AS_TDLIB_JSON_EXTRA_KEY_NAME = "@extra"
 
 # these are the types that are usually lines 1-14 in the Telegram TL file, and can be replaced straight up
 # note: this does not include vector, which is handled specially below
@@ -46,10 +45,11 @@ from telegram_dl import utils
 
 '''
 
-# NOTE: this is a method in a class so everything needs to be indented 4 spaces to start
-ATTRS_GEN_AS_TDLIB_JSON = strip_margin(
-    f'''
-    |    def as_tdlib_json(self) -> str:
-    |        return utils.custom_asdict(self, filter=attr.filters.exclude(attr.fields(RootObject)._extra))
 
-    ''')
+ATTRS_GEN_LOCALS_AND_GLOBALS_VARS = \
+'''
+# use these when you need to use `typing.get_type_hints` or `eval`
+# to resolve a string representation of these types
+tdlib_gen_globals = globals()
+tdlib_gen_locals = locals()
+'''
