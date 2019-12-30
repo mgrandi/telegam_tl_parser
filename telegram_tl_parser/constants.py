@@ -30,6 +30,16 @@ RESULT_NAME_EXTENDS_FROM_ABC = "extends_from_abc"
 RESULT_NAME_RETURN_TYPE = "return_type"
 
 
+ATTRS_GEN_ROOT_OBJECT_DEFINITION = \
+'''
+@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+class RootObject:
+    __tdlib_type__ = "RootObject"
+    _extra:str = attr.ib(default="", repr=False, cmp=False)
+
+
+'''
+
 # you need this __future__ import or else you get errors if you have an annotation
 # for a class that doesn't yet exist
 # see https://www.python.org/dev/peps/pep-0563/ : "PEP 563 -- Postponed Evaluation of Annotations"

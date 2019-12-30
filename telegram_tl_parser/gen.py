@@ -192,7 +192,17 @@ class Generator:
 
         # types
         for iter_type_def in sorted_type_defs_list:
+
             l.debug("current type def: `%s`", iter_type_def)
+
+            if iter_type_def.class_name == constants.ROOT_OBJECT_NAME:
+                # hack because we need to add some special stuff to the root object's
+                # attr definition that no other object needs so i'm just hard coding
+                # the root object definition in a string
+
+                out.write(constants.ATTRS_GEN_ROOT_OBJECT_DEFINITION)
+                l.debug("writing hard coded root object definition")
+                continue
 
 
             out.write(attr_s_annotation_string)
