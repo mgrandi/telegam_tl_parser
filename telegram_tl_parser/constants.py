@@ -31,8 +31,7 @@ RESULT_NAME_RETURN_TYPE = "return_type"
 
 
 ATTRS_GEN_ROOT_OBJECT_DEFINITION = \
-'''
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+'''@attr.s(auto_attribs=True, frozen=True, kw_only=True)
 class RootObject:
     __tdlib_type__ = "RootObject"
     _extra:str = attr.ib(default="", repr=False, cmp=False)
