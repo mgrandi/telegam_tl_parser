@@ -1,0 +1,6 @@
+
+
+have a command line option for whether you want RootObject to have repr=True/False for _extra or not
+
+ MAYBE I  SHOULD MAKE THE FUNCTIONS ATTRS CLASSES TOO that just return the json needed to 'call the RPC funciton'
+

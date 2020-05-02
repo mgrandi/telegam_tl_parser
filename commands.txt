@@ -1,0 +1,15 @@
+python .\parse_tl_file.py  .\docs\example_tl_files\custom_test_file.tl  "~\Temp\attrs_output.py" --verbose --skip-n-lines 0 attrs
+
+python .\parse_tl_file.py  .\docs\example_tl_files\td_api_small.tl "~\Temp\temp3.json  --verbose --skip-n-lines 0 json
+
+
+python .\parse_tl_file.py  ".\docs\example_tl_files\td_api_gitrev-e37f7d1.tl"  "~\Temp\temp.json"  --verbose --skip-n-lines 14 json
+
+
+
+# generate real file but put it in temp instead
+python .\parse_tl_file.py  ".\docs\example_tl_files\td_api_gitrev-e37f7d1.tl" "~\Temp\attrs_output.py"  --verbose --skip-n-lines 14 attrs
+
+
+# generate real file and put it in the telegram_dl project folder
+python .\parse_tl_file.py  ".\docs\example_tl_files\td_api_gitrev-e37f7d1.tl"  "~\Code\Personal\telegram_dl\telegram_dl\tdlib_generated.py"  --skip-n-lines 14 attrs
