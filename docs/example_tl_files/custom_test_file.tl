@@ -1,4 +1,7 @@
 // test no parameters
+// multiline comment
+// whooo
+// hey there
 testTypeZero = TestTypeZero;
 
 // test string

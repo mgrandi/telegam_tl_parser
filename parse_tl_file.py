@@ -61,22 +61,15 @@ if __name__ == "__main__":
         description="parses telegram .tl files into python attrs classes",
         epilog="Copyright 2019-11-21 - Mark Grandi")
 
-    # set up logging stuff
-    logging.captureWarnings(True) # capture warnings with the logging infrastructure
-    root_logger = logging.getLogger()
-    logging_formatter = logging.Formatter("%(asctime)s %(threadName)-10s %(name)-35s %(levelname)-8s: %(message)s")
-    logging_handler = logging.StreamHandler(sys.stdout)
-    logging_handler.setFormatter(logging_formatter)
-    root_logger.addHandler(logging_handler)
-
-    # optional arguments, if specified these are the input and output files, if not specified, it uses stdin and stdout
-    parser.add_argument("tl_file_path",
-        metavar="tl-file",
+    parser.add_argument("--tl-file-path",
+        dest="tl_file_path",
         type=isFileType,
+        required=True,
         help="the telegram .tl file")
-    parser.add_argument("output_file_path",
-        metavar="output-file",
+    parser.add_argument("--output-file-path",
+        dest="output_file_path",
         type=isValidNewFileLocation,
+        required=True,
         help="the output file we will write")
     parser.add_argument("--skip-n-lines",
         dest="skip_n_lines",
@@ -91,6 +84,10 @@ if __name__ == "__main__":
     parser.add_argument("--verbose",
         action="store_true",
         help="Increase logging verbosity")
+    parser.add_argument("--log-to-file",
+        dest="log_to_file",
+        type=isValidNewFileLocation,
+        help="If set, the log statements will be logged to the specified file rather than stdout")
 
     subparsers = parser.add_subparsers(help="sub-command help" )
 
@@ -102,6 +99,21 @@ if __name__ == "__main__":
 
     try:
         parsed_args = parser.parse_args()
+
+        # set up logging stuff
+        logging.captureWarnings(True) # capture warnings with the logging infrastructure
+        root_logger = logging.getLogger()
+        logging_formatter = logging.Formatter("%(asctime)s %(threadName)-10s %(name)-24s %(levelname)-8s: %(message)s")
+
+        # set up logging handler
+        logging_handler = None
+        if parsed_args.log_to_file:
+            logging_handler = logging.FileHandler(parsed_args.log_to_file, mode="a", encoding="utf-8")
+        else:
+            logging_handler = logging.StreamHandler(sys.stdout)
+
+        logging_handler.setFormatter(logging_formatter)
+        root_logger.addHandler(logging_handler)
 
         # set logging level based on arguments
         if parsed_args.verbose:

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class Generator:
 
-    VERSION = 1
+    VERSION = 2
 
     INDENTATION = 4
 
